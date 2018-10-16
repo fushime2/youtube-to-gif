@@ -1,11 +1,21 @@
 #!/bin/bash
 
-if [ $# != 4 ]; then
+if [ $# != 5 ]; then
     echo "Usage:"
-    echo "bash youtube_to_gif.sh <youtube_url> <start_time(second)> <duration(second)> <output name>"
+    echo "bash make_gif.sh <youtube_url> <fps> <start_time(second)> <duration(second)> <output name>"
     exit 1
 fi
 
-youtube-dl -o "a.mp4" $1
-ffmpeg -v warning -ss $2 -t $3 -i a.mp4 -vf scale=300:-1 -gifflags +transdiff -y $4
-rm a.mp4
+fps=$2
+stt=$3
+dur=$4
+size=430
+vname="_a.mp4"
+
+youtube-dl -f "mp4" -o $vname $1
+ffmpeg -loglevel warning -ss $stt -t $dur -y -i $vname -vf "fps=$fps,scale=$size:-1:flags=lanczos,palettegen" palette.png
+ffmpeg -loglevel warning -ss $stt -t $dur -y -i $vname -i palette.png \
+    -filter_complex "fps=$fps,scale=$size:-1:flags=lanczos[x];[x][1:v]paletteuse" $5
+
+rm palette.png
+rm $vname
